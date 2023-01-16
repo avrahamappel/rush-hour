@@ -93,16 +93,12 @@ impl Car {
         self.body().last().expect("shouldn't be an empty body")
     }
 
-    fn includes(&self, other: &Self) -> bool {
-        if self.id == other.id {
-            return false;
-        }
+    fn includes(&self, pos: Position) -> bool {
+        // dbg!(self, pos);
 
-        for pos in self.body() {
-            for opos in other.body() {
-                if pos == opos {
-                    return true;
-                }
+        for ipos in self.body() {
+            if pos == ipos {
+                return true;
             }
         }
 
@@ -191,16 +187,21 @@ impl Grid {
             .any(|c| c.head() == self.exit)
     }
 
-    fn car_fits(&self, car: &Car) -> bool {
-        // dbg!(car.head(), car.tail());
+    fn car_fits(&self, car: &Car, new_pos: Position) -> bool {
+        if self
+            .cars
+            .iter()
+            .filter(|c| c.id != car.id)
+            .any(|c| c.includes(new_pos))
+        {
+            return false;
+        }
 
-        if car.is_player() && car.head() == self.exit {
+        if car.is_player() && new_pos == self.exit {
             return true;
         }
 
-        car.tail().0 < self.width
-            && car.tail().1 < self.height
-            && !self.cars.iter().any(|c| c.includes(car))
+        new_pos.0 < self.width && new_pos.1 < self.height
     }
 
     fn move_car(mut self, id: Id, dir: Dir) -> Option<Self> {
@@ -211,36 +212,36 @@ impl Grid {
             .and_then(|(i, mut c)| {
                 // dbg!(i, &c, dir);
 
-                let try_move = |car| self.car_fits(&car).then_some(car);
-
-                let new_car = match dir {
+                match dir {
                     Dir::Backward => {
                         if c.horizontal {
                             c.x += 1;
                         } else {
                             c.y += 1;
                         }
-                        try_move(c)
+                        Some(c.tail())
                     }
                     Dir::Forward => {
                         if c.horizontal {
-                            c.x.checked_sub(1).and_then(|x| {
+                            c.x.checked_sub(1).map(|x| {
                                 c.x = x;
-                                try_move(c)
+                                c.head()
                             })
                         } else {
-                            c.y.checked_sub(1).and_then(|y| {
+                            c.y.checked_sub(1).map(|y| {
                                 c.y = y;
-                                try_move(c)
+                                c.head()
                             })
                         }
                     }
-                };
+                }
+                .map(|new_pos| {
+                    // dbg!(&c, new_pos);
 
-                // dbg!(&new_car);
+                    if self.car_fits(&c, new_pos) {
+                        self.cars[i] = c;
+                    }
 
-                new_car.map(|car| {
-                    self.cars[i] = car;
                     self
                 })
             })
@@ -349,10 +350,12 @@ fn solve(grid: Grid) -> Option<Vec<Step>> {
     queue.push_back(grid);
 
     while let Some(grid) = queue.pop_front() {
-        eprint!(".");
-
-        // eprintln!("Step {}", visited.len());
-        // eprintln!("Grid: {grid}");
+        if cfg!(debug_assertions) {
+            eprintln!("Step {}", visited.len());
+            eprintln!("Grid: {grid}");
+        } else {
+            eprint!(".");
+        }
 
         if Grid::is_solved(&grid) {
             return Some(get_history(&visited, grid));
