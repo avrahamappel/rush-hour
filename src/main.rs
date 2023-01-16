@@ -17,6 +17,8 @@ enum CarType {
 
 type Id = char;
 
+type Position = (usize, usize);
+
 #[derive(Debug, PartialEq, Clone)]
 struct Car {
     id: Id,
@@ -28,7 +30,7 @@ struct Car {
 }
 
 impl Car {
-    fn new(id: Id, ps: Vec<(usize, usize)>) -> Self {
+    fn new(id: Id, ps: Vec<Position>) -> Self {
         let car_type = if id == 'X' {
             CarType::Player
         } else {
@@ -64,11 +66,11 @@ impl Car {
         matches!(self.car_type, CarType::Player)
     }
 
-    fn head(&self) -> (usize, usize) {
+    fn head(&self) -> Position {
         (self.x, self.y)
     }
 
-    fn body(&self) -> impl Iterator<Item = (usize, usize)> + '_ {
+    fn body(&self) -> impl Iterator<Item = Position> + '_ {
         iter::successors(Some(self.head()), |(px, py)| {
             if self.horizontal {
                 if *px == self.x + self.length - 1 {
@@ -87,7 +89,7 @@ impl Car {
         })
     }
 
-    fn tail(&self) -> (usize, usize) {
+    fn tail(&self) -> Position {
         self.body().last().expect("shouldn't be an empty body")
     }
 
@@ -118,7 +120,7 @@ enum Dir {
 pub struct Grid {
     width: usize,
     height: usize,
-    exit: (usize, usize),
+    exit: Position,
     cars: Vec<Car>,
 }
 
@@ -366,6 +368,7 @@ fn solve(grid: Grid) -> Option<Vec<Step>> {
 
     None
 }
+
 fn main() {
     // Create a new Puzzle instance and solve it.
     let grid = Grid::parse(
