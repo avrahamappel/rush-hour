@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::fmt::Display;
+use std::io::{stdin, Read};
 use std::iter;
 use std::process::exit;
 
@@ -372,10 +373,14 @@ fn solve(grid: Grid) -> Option<Vec<Step>> {
     None
 }
 
-fn main() {
-    // Create a new Puzzle instance and solve it.
-    let grid = Grid::parse(
-        "
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn solve_puzzle() {
+        let grid = Grid::parse(
+            "
         +--x---+
         |...LLL|
         |......|
@@ -385,12 +390,59 @@ fn main() {
         |..X...|
         +------+
         ",
-    )
-    .unwrap();
+        )
+        .unwrap();
 
+        assert_eq!(
+            Some(vec![
+                ('L', "left", 3),
+                ('B', "left", 2),
+                ('G', "up", 3),
+                ('B', "right", 2),
+                ('X', "up", 1),
+                ('U', "left", 1),
+                ('R', "down", 1),
+                ('B', "right", 1),
+                ('X', "up", 1),
+                ('U', "left", 3),
+                ('X', "down", 1),
+                ('B', "left", 3),
+                ('G', "down", 1),
+                ('L', "right", 3),
+                ('G', "down", 2),
+                ('B', "right", 3),
+                ('X', "up", 3),
+            ]),
+            solve(grid)
+        );
+    }
+}
+
+fn main() {
+    let mut input = String::new();
+
+    stdin()
+        .read_to_string(&mut input)
+        .expect("Couldn't process stdin");
+
+    let grid = Grid::parse(&input);
     // dbg!(&grid);
 
-    if let Some(solution) = solve(grid) {
+    if grid.is_none() {
+        println!("Could not parse input. Try entering something like this:");
+        println!("+--x---+");
+        println!("|...LLL|");
+        println!("|......|");
+        println!("|..BBBR|");
+        println!("|...G.R|");
+        println!("|..XGUU|");
+        println!("|..X...|");
+        println!("+------+");
+
+        exit(2);
+    }
+
+    if let Some(solution) = solve(grid.unwrap()) {
         println!();
         println!("Solution found!");
 
