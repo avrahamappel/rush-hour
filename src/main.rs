@@ -444,10 +444,10 @@ fn main() {
 
     if let Some(solution) = solve(grid.unwrap()) {
         println!();
-        println!("Solution found!");
+        println!("Solution found in {} steps!", solution.len());
 
-        for (car, dir, count) in solution {
-            println!("{} {} {}", car, dir, count);
+        for (i, (car, dir, count)) in solution.iter().enumerate() {
+            println!("{:2}. {} - {} {}", i + 1, car, dir, count);
         }
     } else {
         println!("No solution found.");
