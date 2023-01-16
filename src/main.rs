@@ -447,7 +447,7 @@ fn main() {
         println!("Solution found!");
 
         for (car, dir, count) in solution {
-            println!("{} {:?} {}", car, dir, count);
+            println!("{} {} {}", car, dir, count);
         }
     } else {
         println!("No solution found.");
